@@ -1,0 +1,1068 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Earn - টাস্ক আর্ন</title>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+            direction: ltr;
+        }
+
+        .container {
+            max-width: 400px;
+            margin: 0 auto;
+            background: white;
+            min-height: 100vh;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #4CAF50, #45a049);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .header h1 {
+            font-size: 24px;
+            margin-bottom: 5px;
+        }
+
+        .header .subtitle {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            font-size: 12px;
+        }
+
+        .balance-card {
+            background: linear-gradient(135deg, #FF6B6B, #FF8E53);
+            margin: 20px;
+            padding: 20px;
+            border-radius: 15px;
+            color: white;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(255,107,107,0.3);
+        }
+
+        .balance-amount {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .balance-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin: 0 20px 20px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #4CAF50;
+        }
+
+        .stat-number {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4CAF50;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .nav-tabs {
+            display: flex;
+            background: white;
+            margin: 0 20px;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .nav-tab {
+            flex: 1;
+            padding: 15px 10px;
+            text-align: center;
+            background: #f5f5f5;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .nav-tab.active {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 20px;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .task-card {
+            background: white;
+            margin-bottom: 15px;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            border-left: 4px solid #FF6B6B;
+        }
+
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .task-title {
+            font-weight: bold;
+            font-size: 16px;
+        }
+
+        .task-reward {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+        }
+
+        .task-description {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 15px;
+        }
+
+        .task-button {
+            width: 100%;
+            padding: 12px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background 0.3s;
+        }
+
+        .task-button:hover {
+            background: #45a049;
+        }
+
+        .task-button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .task-button.completed {
+            background: #28a745;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #4CAF50;
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            background: white;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 15px;
+            background: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .submit-btn:hover {
+            background: #45a049;
+        }
+
+        .referral-card {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        .referral-link {
+            background: rgba(255,255,255,0.2);
+            padding: 10px;
+            border-radius: 8px;
+            margin: 10px 0;
+            word-break: break-all;
+            font-size: 12px;
+        }
+
+        .copy-btn {
+            background: rgba(255,255,255,0.3);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.5);
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+
+        .referral-item {
+            background: rgba(255,255,255,0.1);
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .withdrawal-request {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            border-left: 4px solid #FF6B6B;
+        }
+
+        .status-pending {
+            color: #FF6B6B;
+            font-weight: bold;
+        }
+
+        .status-approved {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+
+        .status-rejected {
+            color: #f44336;
+            font-weight: bold;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #4CAF50;
+        }
+
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #f44336;
+        }
+
+        .connection-status {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            z-index: 1000;
+        }
+
+        .connected {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .disconnected {
+            background: #f44336;
+            color: white;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                max-width: 100%;
+            }
+            
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .nav-tab {
+                font-size: 12px;
+                padding: 12px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="connection-status" id="connectionStatus">🔄 সংযোগ করা হচ্ছে...</div>
+    
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Task Earn</h1>
+            <div class="subtitle">টাস্ক করুন, টাকা আয় করুন</div>
+            <div class="user-info" id="userInfo">
+                <div>👤 লোড হচ্ছে...</div>
+            </div>
+        </div>
+
+        <div class="balance-card">
+            <div class="balance-amount" id="userBalance">৳০</div>
+            <div class="balance-label">মোট ব্যালেন্স</div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number" id="completedTasks">০</div>
+                <div class="stat-label">সম্পন্ন টাস্ক</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="referralCount">০</div>
+                <div class="stat-label">রেফারেল</div>
+            </div>
+        </div>
+
+        <div class="nav-tabs">
+            <button class="nav-tab active" onclick="showTab('tasks')">📋 টাস্ক</button>
+            <button class="nav-tab" onclick="showTab('referral')">👥 রেফার</button>
+            <button class="nav-tab" onclick="showTab('withdraw')">💰 উইথড্র</button>
+        </div>
+
+        <!-- Tasks Tab -->
+        <div id="tasks" class="tab-content active">
+            <div id="tasksList" class="loading">
+                টাস্ক লোড হচ্ছে...
+            </div>
+        </div>
+
+        <!-- Referral Tab -->
+        <div id="referral" class="tab-content">
+            <div class="referral-card">
+                <h3>👥 রেফারেল প্রোগ্রাম</h3>
+                <p>বন্ধুদের আমন্ত্রণ জানান এবং প্রতি রেফারেলের জন্য ১০০ টাকা পান!</p>
+                <div class="referral-link" id="referralLink">
+                    লিংক তৈরি হচ্ছে...
+                </div>
+                <button class="copy-btn" onclick="copyReferralLink()">লিংক কপি করুন</button>
+            </div>
+
+            <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+                <h4>আপনার রেফারেল তালিকা</h4>
+                <div id="referralList" class="loading">
+                    রেফারেল লোড হচ্ছে...
+                </div>
+            </div>
+        </div>
+
+        <!-- Withdraw Tab -->
+        <div id="withdraw" class="tab-content">
+            <div class="form-group">
+                <label class="form-label">পেমেন্ট মেথড</label>
+                <select class="form-select" id="paymentMethod">
+                    <option value="bkash">বিকাশ</option>
+                    <option value="nagad">নগদ</option>
+                    <option value="rocket">রকেট</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">মোবাইল নম্বর</label>
+                <input type="tel" class="form-input" id="phoneNumber" placeholder="01XXXXXXXXX">
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">উইথড্র পরিমাণ (সর্বনিম্ন ১০০ টাকা)</label>
+                <input type="number" class="form-input" id="withdrawAmount" placeholder="১০০" min="100">
+            </div>
+
+            <button class="submit-btn" onclick="requestWithdrawal()">উইথড্র রিকোয়েস্ট করুন</button>
+
+            <div style="background: white; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); margin-top: 30px;">
+                <h4>উইথড্র হিস্টরি</h4>
+                <div id="withdrawHistory" class="loading">
+                    হিস্টরি লোড হচ্ছে...
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Firebase Configuration - Replace with your actual config
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrmybI-BLU7mYmKixvKrop-0cFEWfYHjA",
+            authDomain: "earn-money-fed60.firebaseapp.com",
+            databaseURL: "https://earn-money-fed60-default-rtdb.firebaseio.com",
+            projectId: "earn-money-fed60",
+            storageBucket: "earn-money-fed60.firebasestorage.app",
+            messagingSenderId: "1068823227874",
+            appId: "1:1068823227874:web:d6760e3b4bfa8670aa9dbb"
+        };
+
+        // Initialize Firebase
+        let database;
+        let isConnected = false;
+        
+        try {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            
+            // Monitor connection status
+            const connectedRef = database.ref('.info/connected');
+            connectedRef.on('value', (snapshot) => {
+                isConnected = snapshot.val();
+                updateConnectionStatus();
+            });
+        } catch (error) {
+            console.error('Firebase initialization error:', error);
+            showMessage('Firebase সংযোগে সমস্যা হয়েছে। ডেমো মোডে চলছে।', 'error');
+        }
+
+        // Global Variables
+        let currentUser = null;
+        let userTasks = [];
+        let allTasks = [];
+        let userReferrals = [];
+        let withdrawRequests = [];
+
+        // Telegram WebApp Integration
+        let tg = null;
+        if (window.Telegram && window.Telegram.WebApp) {
+            tg = window.Telegram.WebApp;
+            tg.ready();
+            tg.expand();
+        }
+
+        // Initialize App
+        async function initApp() {
+            try {
+                await authenticateUser();
+                await loadUserData();
+                await loadTasks();
+                await loadReferrals();
+                await loadWithdrawHistory();
+                setupRealtimeListeners();
+            } catch (error) {
+                console.error('App initialization error:', error);
+                showMessage('অ্যাপ লোড করতে সমস্যা হয়েছে।', 'error');
+            }
+        }
+
+        // User Authentication using Telegram WebApp
+        async function authenticateUser() {
+            let userId, name, username;
+
+            if (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                // Real Telegram data
+                const user = tg.initDataUnsafe.user;
+                userId = user.id.toString();
+                name = user.first_name + (user.last_name ? ' ' + user.last_name : '');
+                username = user.username || '';
+            } else {
+                // Demo data for testing
+                userId = 'demo_' + Math.random().toString(36).substr(2, 9);
+                name = 'ডেমো ইউজার';
+                username = 'demo_user';
+            }
+
+            currentUser = {
+                id: userId,
+                name: name,
+                username: username,
+                balance: 0,
+                refs: {},
+                tasksCompleted: {},
+                isBlocked: false
+            };
+
+            // Update user info in UI
+            document.getElementById('userInfo').innerHTML = `
+                <div>👤 ${name}</div>
+                <div style="font-size: 10px; opacity: 0.8;">@${username} (ID: ${userId})</div>
+            `;
+
+            // Check if user exists in database, if not create
+            if (database) {
+                const userRef = database.ref('users/' + userId);
+                const snapshot = await userRef.once('value');
+                
+                if (!snapshot.exists()) {
+                    // Create new user
+                    await userRef.set({
+                        name: name,
+                        username: username,
+                        balance: 0,
+                        refs: {},
+                        tasksCompleted: {},
+                        isBlocked: false,
+                        joinDate: firebase.database.ServerValue.TIMESTAMP
+                    });
+                } else {
+                    // Update existing user info
+                    await userRef.update({
+                        name: name,
+                        username: username,
+                        lastActive: firebase.database.ServerValue.TIMESTAMP
+                    });
+                }
+            }
+        }
+
+        // Load User Data
+        async function loadUserData() {
+            if (!database || !currentUser) return;
+
+            try {
+                const userRef = database.ref('users/' + currentUser.id);
+                const snapshot = await userRef.once('value');
+                
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    currentUser = { ...currentUser, ...userData };
+                    updateUI();
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+
+        // Load Tasks from Firebase
+        async function loadTasks() {
+            if (!database) {
+                // Demo tasks
+                allTasks = [
+                    {
+                        id: 'youtube_1',
+                        type: 'youtube',
+                        title: 'ইউটিউব ভিডিও দেখুন',
+                        description: 'ভিডিওটি সম্পূর্ণ দেখুন এবং পয়েন্ট পান',
+                        reward: 50,
+                        url: 'https://youtube.com/watch?v=demo',
+                        duration: 60,
+                        active: true
+                    },
+                    {
+                        id: 'telegram_1',
+                        type: 'telegram',
+                        title: 'টেলিগ্রাম চ্যানেল জয়েন',
+                        description: 'আমাদের টেলিগ্রাম চ্যানেলে জয়েন করুন',
+                        reward: 30,
+                        url: 'https://t.me/TaskEarnChannel',
+                        active: true
+                    },
+                    {
+                        id: 'website_1',
+                        type: 'website',
+                        title: 'ওয়েবসাইট ভিজিট করুন',
+                        description: 'আমাদের ওয়েবসাইট ভিজিট করুন',
+                        reward: 20,
+                        url: 'https://example.com',
+                        active: true
+                    }
+                ];
+                renderTasks();
+                return;
+            }
+
+            try {
+                const tasksRef = database.ref('tasks');
+                const snapshot = await tasksRef.once('value');
+                
+                if (snapshot.exists()) {
+                    const tasksData = snapshot.val();
+                    allTasks = Object.keys(tasksData).map(key => ({
+                        id: key,
+                        ...tasksData[key]
+                    })).filter(task => task.active);
+                } else {
+                    allTasks = [];
+                }
+                
+                renderTasks();
+            } catch (error) {
+                console.error('Error loading tasks:', error);
+                document.getElementById('tasksList').innerHTML = '<div style="text-align: center; color: #f44336;">টাস্ক লোড করতে সমস্যা হয়েছে</div>';
+            }
+        }
+
+        // Render Tasks
+        function renderTasks() {
+            const tasksContainer = document.getElementById('tasksList');
+            
+            if (allTasks.length === 0) {
+                tasksContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">কোনো টাস্ক পাওয়া যায়নি</div>';
+                return;
+            }
+
+            tasksContainer.innerHTML = allTasks.map(task => {
+                const isCompleted = currentUser.tasksCompleted && currentUser.tasksCompleted[task.id];
+                return `
+                    <div class="task-card">
+                        <div class="task-header">
+                            <div class="task-title">${getTaskIcon(task.type)} ${task.title}</div>
+                            <div class="task-reward">+৳${task.reward}</div>
+                        </div>
+                        <div class="task-description">${task.description}</div>
+                        <button class="task-button ${isCompleted ? 'completed' : ''}" 
+                                onclick="completeTask('${task.id}')" 
+                                ${isCompleted ? 'disabled' : ''}>
+                            ${isCompleted ? 'সম্পন্ন ✓' : 'টাস্ক করুন'}
+                        </button>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Get Task Icon
+        function getTaskIcon(type) {
+            const icons = {
+                youtube: '🎥',
+                telegram: '📢',
+                website: '🌐',
+                app: '📱',
+                survey: '📊'
+            };
+            return icons[type] || '📋';
+        }
+
+        // Complete Task
+        async function completeTask(taskId) {
+            if (!currentUser || (currentUser.tasksCompleted && currentUser.tasksCompleted[taskId])) {
+                return;
+            }
+
+            const task = allTasks.find(t => t.id === taskId);
+            if (!task) return;
+
+            const button = event.target;
+            button.disabled = true;
+            button.textContent = 'প্রক্রিয়াকরণ...';
+
+            try {
+                // Open task URL if available
+                if (task.url) {
+                    window.open(task.url, '_blank');
+                }
+
+                // Simulate task completion delay
+                await new Promise(resolve => setTimeout(resolve, 2000));
+
+                if (database) {
+                    // Update user data in Firebase
+                    const updates = {};
+                    updates[`users/${currentUser.id}/balance`] = (currentUser.balance || 0) + task.reward;
+                    updates[`users/${currentUser.id}/tasksCompleted/${taskId}`] = {
+                        completedAt: firebase.database.ServerValue.TIMESTAMP,
+                        reward: task.reward
+                    };
+
+                    await database.ref().update(updates);
+                } else {
+                    // Demo mode
+                    currentUser.balance = (currentUser.balance || 0) + task.reward;
+                    if (!currentUser.tasksCompleted) currentUser.tasksCompleted = {};
+                    currentUser.tasksCompleted[taskId] = {
+                        completedAt: Date.now(),
+                        reward: task.reward
+                    };
+                    updateUI();
+                }
+
+                button.textContent = 'সম্পন্ন ✓';
+                button.classList.add('completed');
+                showMessage(`অভিনন্দন! আপনি ৳${task.reward} আয় করেছেন।`, 'success');
+
+            } catch (error) {
+                console.error('Error completing task:', error);
+                button.disabled = false;
+                button.textContent = 'টাস্ক করুন';
+                showMessage('টাস্ক সম্পন্ন করতে সমস্যা হয়েছে।', 'error');
+            }
+        }
+
+        // Load Referrals
+        async function loadReferrals() {
+            if (!database || !currentUser) {
+                document.getElementById('referralList').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">কোনো রেফারেল নেই</div>';
+                return;
+            }
+
+            try {
+                const userRef = database.ref('users/' + currentUser.id + '/refs');
+                const snapshot = await userRef.once('value');
+                
+                if (snapshot.exists()) {
+                    const refsData = snapshot.val();
+                    userReferrals = Object.keys(refsData).map(key => ({
+                        id: key,
+                        ...refsData[key]
+                    }));
+                } else {
+                    userReferrals = [];
+                }
+                
+                renderReferrals();
+            } catch (error) {
+                console.error('Error loading referrals:', error);
+                document.getElementById('referralList').innerHTML = '<div style="text-align: center; color: #f44336;">রেফারেল লোড করতে সমস্যা হয়েছে</div>';
+            }
+        }
+
+        // Render Referrals
+        function renderReferrals() {
+            const referralContainer = document.getElementById('referralList');
+            
+            if (userReferrals.length === 0) {
+                referralContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">এখনো কোনো রেফারেল নেই</div>';
+                return;
+            }
+
+            referralContainer.innerHTML = userReferrals.map(ref => `
+                <div class="referral-item">
+                    <div>
+                        <strong>${ref.name || 'অজানা'}</strong><br>
+                        <small>যোগদান: ${new Date(ref.joinedAt).toLocaleDateString('bn-BD')}</small>
+                    </div>
+                    <div style="color: #4CAF50; font-weight: bold;">+৳${ref.bonus || 100}</div>
+                </div>
+            `).join('');
+        }
+
+        // Generate and Copy Referral Link
+        function copyReferralLink() {
+            if (!currentUser) return;
+            
+            const referralLink = `https://t.me/TaskEarnBot?start=ref_${currentUser.id}`;
+            document.getElementById('referralLink').textContent = referralLink;
+            
+            navigator.clipboard.writeText(referralLink).then(() => {
+                showMessage('রেফারেল লিংক কপি হয়েছে!', 'success');
+            }).catch(() => {
+                showMessage('লিংক কপি করতে সমস্যা হয়েছে।', 'error');
+            });
+        }
+
+        // Request Withdrawal
+        async function requestWithdrawal() {
+            if (!currentUser) return;
+
+            const method = document.getElementById('paymentMethod').value;
+            const number = document.getElementById('phoneNumber').value;
+            const amount = parseInt(document.getElementById('withdrawAmount').value);
+
+            if (!number || !amount || amount < 100) {
+                showMessage('সব তথ্য সঠিকভাবে পূরণ করুন। সর্বনিম্ন ১০০ টাকা।', 'error');
+                return;
+            }
+
+            if (amount > (currentUser.balance || 0)) {
+                showMessage('অপর্যাপ্ত ব্যালেন্স।', 'error');
+                return;
+            }
+
+            try {
+                const requestId = 'wd_' + Date.now() + '_' + currentUser.id;
+                const withdrawRequest = {
+                    userId: currentUser.id,
+                    userName: currentUser.name,
+                    method: method,
+                    number: number,
+                    amount: amount,
+                    status: 'pending',
+                    requestedAt: firebase.database.ServerValue.TIMESTAMP
+                };
+
+                if (database) {
+                    // Create withdrawal request and update user balance
+                    const updates = {};
+                    updates[`withdraw_requests/${requestId}`] = withdrawRequest;
+                    updates[`users/${currentUser.id}/balance`] = (currentUser.balance || 0) - amount;
+
+                    await database.ref().update(updates);
+                } else {
+                    // Demo mode
+                    currentUser.balance = (currentUser.balance || 0) - amount;
+                    updateUI();
+                }
+
+                // Clear form
+                document.getElementById('phoneNumber').value = '';
+                document.getElementById('withdrawAmount').value = '';
+
+                showMessage('উইথড্র রিকোয়েস্ট সফলভাবে জমা হয়েছে।', 'success');
+                loadWithdrawHistory();
+
+            } catch (error) {
+                console.error('Error requesting withdrawal:', error);
+                showMessage('উইথড্র রিকোয়েস্ট করতে সমস্যা হয়েছে।', 'error');
+            }
+        }
+
+        // Load Withdraw History
+        async function loadWithdrawHistory() {
+            if (!database || !currentUser) {
+                document.getElementById('withdrawHistory').innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">কোনো উইথড্র রিকোয়েস্ট নেই</div>';
+                return;
+            }
+
+            try {
+                const withdrawRef = database.ref('withdraw_requests').orderByChild('userId').equalTo(currentUser.id);
+                const snapshot = await withdrawRef.once('value');
+                
+                if (snapshot.exists()) {
+                    const withdrawData = snapshot.val();
+                    withdrawRequests = Object.keys(withdrawData).map(key => ({
+                        id: key,
+                        ...withdrawData[key]
+                    })).sort((a, b) => b.requestedAt - a.requestedAt);
+                } else {
+                    withdrawRequests = [];
+                }
+                
+                renderWithdrawHistory();
+            } catch (error) {
+                console.error('Error loading withdraw history:', error);
+                document.getElementById('withdrawHistory').innerHTML = '<div style="text-align: center; color: #f44336;">হিস্টরি লোড করতে সমস্যা হয়েছে</div>';
+            }
+        }
+
+        // Render Withdraw History
+        function renderWithdrawHistory() {
+            const historyContainer = document.getElementById('withdrawHistory');
+            
+            if (withdrawRequests.length === 0) {
+                historyContainer.innerHTML = '<div style="text-align: center; color: #666; padding: 20px;">কোনো উইথড্র রিকোয়েস্ট নেই</div>';
+                return;
+            }
+
+            historyContainer.innerHTML = withdrawRequests.map(req => `
+                <div class="withdrawal-request">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <strong>${req.method.toUpperCase()}: ${req.number}</strong><br>
+                            <small>৳${req.amount} - ${new Date(req.requestedAt).toLocaleDateString('bn-BD')}</small>
+                        </div>
+                        <div class="status-${req.status}">${getStatusText(req.status)}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Get Status Text
+        function getStatusText(status) {
+            const statusMap = {
+                'pending': 'অপেক্ষমাণ',
+                'approved': 'অনুমোদিত',
+                'rejected': 'প্রত্যাখ্যাত'
+            };
+            return statusMap[status] || status;
+        }
+
+        // Setup Realtime Listeners
+        function setupRealtimeListeners() {
+            if (!database || !currentUser) return;
+
+            // Listen to user data changes
+            const userRef = database.ref('users/' + currentUser.id);
+            userRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const userData = snapshot.val();
+                    currentUser = { ...currentUser, ...userData };
+                    updateUI();
+                }
+            });
+
+            // Listen to tasks changes
+            const tasksRef = database.ref('tasks');
+            tasksRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const tasksData = snapshot.val();
+                    allTasks = Object.keys(tasksData).map(key => ({
+                        id: key,
+                        ...tasksData[key]
+                    })).filter(task => task.active);
+                    renderTasks();
+                }
+            });
+
+            // Listen to referrals changes
+            const refsRef = database.ref('users/' + currentUser.id + '/refs');
+            refsRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const refsData = snapshot.val();
+                    userReferrals = Object.keys(refsData).map(key => ({
+                        id: key,
+                        ...refsData[key]
+                    }));
+                } else {
+                    userReferrals = [];
+                }
+                renderReferrals();
+            });
+
+            // Listen to withdraw requests changes
+            const withdrawRef = database.ref('withdraw_requests').orderByChild('userId').equalTo(currentUser.id);
+            withdrawRef.on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    const withdrawData = snapshot.val();
+                    withdrawRequests = Object.keys(withdrawData).map(key => ({
+                        id: key,
+                        ...withdrawData[key]
+                    })).sort((a, b) => b.requestedAt - a.requestedAt);
+                } else {
+                    withdrawRequests = [];
+                }
+                renderWithdrawHistory();
+            });
+        }
+
+        // Update UI
+        function updateUI() {
+            if (!currentUser) return;
+
+            document.getElementById('userBalance').textContent = '৳' + (currentUser.balance || 0);
+            
+            const completedCount = currentUser.tasksCompleted ? Object.keys(currentUser.tasksCompleted).length : 0;
+            document.getElementById('completedTasks').textContent = completedCount;
+            
+            const referralCount = currentUser.refs ? Object.keys(currentUser.refs).length : 0;
+            document.getElementById('referralCount').textContent = referralCount;
+
+            // Generate referral link
+            if (currentUser.id) {
+                const referralLink = `https://t.me/TaskEarnBot?start=ref_${currentUser.id}`;
+                document.getElementById('referralLink').textContent = referralLink;
+            }
+        }
+
+        // Update Connection Status
+        function updateConnectionStatus() {
+            const statusElement = document.getElementById('connectionStatus');
+            if (isConnected) {
+                statusElement.textContent = '🟢 সংযুক্ত';
+                statusElement.className = 'connection-status connected';
+            } else {
+                statusElement.textContent = '🔴 সংযোগ বিচ্ছিন্ন';
+                statusElement.className = 'connection-status disconnected';
+            }
+        }
+
+        // Tab Navigation
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+
+            // Remove active class from all nav tabs
+            const navTabs = document.querySelectorAll('.nav-tab');
+            navTabs.forEach(tab => tab.classList.remove('active'));
+
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            event.target.classList.add('active');
+        }
+
+        // Show Message
+        function showMessage(message, type) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = type === 'success' ? 'success-message' : 'error-message';
+            messageDiv.textContent = message;
+            
+            document.querySelector('.container').appendChild(messageDiv);
+            
+            setTimeout(() => {
+                messageDiv.remove();
+            }, 4000);
+        }
+
+        // Initialize app when page loads
+        document.addEventListener('DOMContentLoaded', initApp);
+
+        // Handle page visibility change to reconnect if needed
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && database) {
+                // Refresh data when page becomes visible
+                loadUserData();
+                loadTasks();
+                loadReferrals();
+                loadWithdrawHistory();
+            }
+        });
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'976d2a99d7af4ea6',t:'MTc1NjQ4MjIzMi4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
